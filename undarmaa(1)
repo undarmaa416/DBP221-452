@@ -1,0 +1,153 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[2]:
+
+
+import numpy as np
+import pandas as pd
+data = pd.read_excel (r'Downloads\UU.xlsx')
+
+
+# In[3]:
+
+
+xls = pd.ExcelFile(r'Downloads\UU.xlsx')
+irts = pd.read_excel(xls, 'Ирц')
+seminar = pd.read_excel(xls, 'Семинар')
+exam = pd.read_excel(xls, 'Шалгалт')
+assignment = pd.read_excel(xls, 'Бие даалт')
+XX = pd.read_excel(xls, 'Хүмүүжил хандлага')
+nemelt = pd.read_excel(xls, 'Нэмэлт оноо')
+Niit = pd.read_excel(xls, 'Нийт')
+
+
+# In[4]:
+
+
+irts["Нийт -10"] = data.apply(lambda row: sum(row=='и')/32*10 ,axis=1)
+
+
+# In[5]:
+
+
+col_list= ['Seminar1', 'Seminar2', 'Seminar3', 'Seminar4', 'Seminar5', 'Seminar6', 'Seminar7', 'Seminar7', 'Seminar8', 'Seminar9', 'Seminar10','Seminar12', 'Seminar13', 'Seminar14', 'Seminar15', 'Seminar16', 'Seminar17', 'Seminar18', 'Seminar19']
+seminar["Нийт -25"] = seminar[col_list].sum(axis=1)/19*25
+
+
+# In[6]:
+
+
+exam=exam.fillna(0)
+col_list= ['Шалгалт - 1', 'Шалгалт - 2', 'Шалгалт - 3']
+exam['Нийт'] =exam[col_list].sum(axis=1)
+
+
+# In[7]:
+
+
+assignment = assignment.fillna(0)
+col_list= ['Бие даалт - 1', 'Бие даалт - 2']
+assignment['Нийт'] = assignment[col_list].sum(axis=1)
+
+
+# In[8]:
+
+
+XX=XX.fillna(0)
+col_list= ['ХХ-1', 'ХХ-2','ХХ-3','ХХ-4']
+XX['Нийт'] = XX[col_list].sum(axis=1)
+
+
+# In[9]:
+
+
+nemelt=nemelt.fillna(0)
+col = ["Нэмэлт оноо"]
+nemelt['Нийт'] = nemelt[col].sum(axis=1)
+
+
+# In[10]:
+
+
+series_irts = pd.Series(irts["Нийт -10"])
+series_seminar = pd.Series(seminar["Нийт -25"] )
+series_exam = pd.Series(exam['Нийт'])
+series_assignment = pd.Series(assignment['Нийт'])
+series_XX = pd.Series(XX['Нийт'])
+series_nemelt = pd.Series(nemelt['Нийт'])
+
+
+# In[11]:
+
+
+Niit['Ирц-10']=pd.Series.replace(series_irts)
+Niit['Семинар-25']=pd.Series.replace(series_seminar)
+Niit['Шалгалт-30']=pd.Series.replace(series_exam)
+Niit['Бие даалт-25']=pd.Series.replace(series_assignment)
+Niit['ХХ-10']=pd.Series.replace(series_XX)
+Niit['Нэмэлт оноо']=pd.Series.replace(series_nemelt)
+cols=['Ирц-10', 'Семинар-25', 'Шалгалт-30','Бие даалт-25','ХХ-10','Нэмэлт оноо']
+Niit['Нийт']=Niit[cols].sum(axis=1)
+
+
+# In[12]:
+
+
+A=0
+B=0
+C=0
+D=0
+F=0
+for i in Niit['Нийт']:
+    if i>90:
+        A+=1
+    elif 90>i and i>80:
+        B+=1
+    elif 80>i and i>70:
+        C+=1 
+    elif 70>i and i>60:
+        D+=1
+    else:
+        F+=1
+Niit.at[0,'Тоо']=A
+Niit.at[1,'Тоо']=B
+Niit.at[2,'Тоо']=C
+Niit.at[3,'Тоо']=D
+Niit.at[4,'Тоо']=F
+Niit.at[28,'Нийт']=Niit['Нийт'].mean()
+grades = {95.5:"A",89.5:'A-',86.5:'B+',82.5:'B',79.5:"B-",76.5:'C+',72.5:"C",69.5:'C-',66.5:'D+',62.5:'D',59.5:'D-',0:'F'}
+def grade_mapping(value):
+    for key, letter in grades.items():
+        if value >= key:
+            return letter
+letter_grades = Niit["Нийт"].map(grade_mapping)
+Niit["Үнэлгээ"] = pd.Categorical(letter_grades, categories=grades.values(), ordered=True)
+Niit.to_excel(r'Downloads\UUUu.xlsx')
+Niit
+
+
+# In[13]:
+
+
+mash_sain = (Niit['Нийт'] >= 80).sum()
+chanar = mash_sain/27*100
+print('Чанарын хувь -',chanar,'%')
+
+tentssen = (Niit['Нийт'] >= 60).sum()
+success = tentssen/27*100
+print('Амжилтын хувь -',success,'%')
+
+print('\nИрц:\nХамгийн өндөр оноо -',series_irts.max(), '\nХамгийн бага оноо -',series_irts.min(),'\nДундаж ирцийн оноо -',series_irts.mean(),'байна.')
+print('\nСеминарийн оноо:\nХамгийн их оноо -',series_seminar.max(), '\nХамгийн бага оноо -',series_seminar.min(),'\nДундаж семиарын оноо -',series_seminar.mean(),'байна.')
+print('\nШалгалтын оноо:\nХамгийн их оноо -',series_exam.max(), '\nХамгийн бага оноо -',series_exam.min(),'\nДундаж шалгалтын оноо -',series_exam.mean(),'байна.')
+print('\nБие даалтын оноо:\nХамгийн их оноо -',series_assignment.max(), '\nХамгийн бага оноо -',series_assignment.min(),'\nДундаж бие даалтын оноо -',series_assignment.mean(),'байна.')
+print('\nХүмүүжил хандлагын оноо:\nХамгийн их оноо -',series_XX.max(), '\nХамгийн бага оноо -',series_XX.min(),'\nДундаж Х/хандлагын оноо -',series_XX.mean(),'байна.')
+print('\nНэмэлт оноо:\nХамгийн их оноо -',series_nemelt.max(), '\nХамгийн бага оноо -',series_nemelt.min(),'\nДундаж нэмэлт оноо -',series_nemelt.mean(),'байна.')
+
+
+# In[ ]:
+
+
+
+
